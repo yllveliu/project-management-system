@@ -1,6 +1,6 @@
 # Project Management System
 
-A full-stack project management system built with React, TypeScript, FastAPI, and PostgreSQL.
+A full-stack project management system developed as part of a final year diploma thesis, focused on managing projects, tasks, and team workflows.
 
 ## Planned Stack
 - Frontend: React + TypeScript
