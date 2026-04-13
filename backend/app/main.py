@@ -1,7 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+from app.database import engine, Base, get_db
+from app.models.user import User
+from app.models.project import Project
+from app.models.task import Task
 
 app = FastAPI()
 
+Base.metadata.create_all(bind=engine)
+
 @app.get("/")
-def read_root():
-    return {"message": "API running"}
+def root():
+    return {"message": "Backend is working"}
+
+@app.get("/test-db")
+def test_db(db: Session = Depends(get_db)):
+    return {"message": "Database session created successfully"}
