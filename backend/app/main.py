@@ -4,8 +4,11 @@ from app.database import engine, Base, get_db
 from app.models.user import User
 from app.models.project import Project
 from app.models.task import Task
+from app.routers import auth
 
 app = FastAPI()
+
+app.include_router(auth.router)
 
 Base.metadata.create_all(bind=engine)
 
