@@ -17,3 +17,4 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     tasks = relationship("Task", back_populates="assignee")
+    projects = relationship("Project", back_populates="user")
