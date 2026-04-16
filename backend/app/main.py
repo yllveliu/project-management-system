@@ -4,12 +4,13 @@ from app.database import engine, Base, get_db
 from app.models.user import User
 from app.models.project import Project
 from app.models.task import Task
-from app.routers import auth, project
+from app.routers import auth, project, task
 
 app = FastAPI()
 
 app.include_router(auth.router)
 app.include_router(project.router)
+app.include_router(task.router)
 
 Base.metadata.create_all(bind=engine)
 
