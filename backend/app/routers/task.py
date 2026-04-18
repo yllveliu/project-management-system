@@ -38,6 +38,7 @@ def get_tasks(
         query = query.filter(Task.status == status)
     if assigned_to is not None:
         query = query.filter(Task.assigned_to == assigned_to)
+    query = query.order_by(Task.created_at.desc())
     return query.all()
 
 
