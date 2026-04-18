@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.task import Task
-from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
+from app.schemas.task import TaskCreate, TaskResponse, TaskStatusUpdate, TaskUpdate
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -50,3 +50,17 @@ def delete_task(id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Task not found")
     db.delete(task)
     db.commit()
+
+
+@router.patch("/{id}/status", response_model=TaskResponse)
+def update_task_status(id: int, task_in: TaskStatusUpdate, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    allowed = ["To Do", "In Progress", "Done"]
+    if task_in.status not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    task.status = task_in.status
+    db.commit()
+    db.refresh(task)
+    return task

@@ -21,8 +21,13 @@ class TaskResponse(BaseModel):
     id: int
     title: str
     description: Optional[str] = None
+    status: str
     project_id: int
     assigned_to: Optional[int]
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class TaskStatusUpdate(BaseModel):
+    status: str
