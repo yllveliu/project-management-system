@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -23,8 +25,20 @@ def create_task(task_in: TaskCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[TaskResponse])
-def get_tasks(db: Session = Depends(get_db)):
-    return db.query(Task).all()
+def get_tasks(
+    project_id: Optional[int] = None,
+    status: Optional[str] = None,
+    assigned_to: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    query = db.query(Task)
+    if project_id is not None:
+        query = query.filter(Task.project_id == project_id)
+    if status is not None:
+        query = query.filter(Task.status == status)
+    if assigned_to is not None:
+        query = query.filter(Task.assigned_to == assigned_to)
+    return query.all()
 
 
 @router.patch("/{id}", response_model=TaskResponse)
