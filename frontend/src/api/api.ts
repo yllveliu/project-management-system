@@ -31,3 +31,26 @@ export async function createProject(data: object) {
   });
   return response.json();
 }
+
+export async function getTasks() {
+  const response = await fetch(`${BASE_URL}/tasks/`);
+  return response.json();
+}
+
+export async function createTask(data: object) {
+  const response = await fetch(`${BASE_URL}/tasks/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function updateTaskStatus(id: number, data: object) {
+  const response = await fetch(`${BASE_URL}/tasks/${id}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
