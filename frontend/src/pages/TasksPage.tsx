@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getTasks } from "../api/api";
+import { getTasks, updateTaskStatus } from "../api/api";
 
 function TasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -7,6 +7,14 @@ function TasksPage() {
   useEffect(() => {
     getTasks().then((data) => setTasks(data));
   }, []);
+
+  const handleStatusChange = (taskId: number, newStatus: string) => {
+    updateTaskStatus(taskId, { status: newStatus }).then(() => {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      );
+    });
+  };
 
   const todo = tasks.filter((t) => t.status === "To Do");
   const inProgress = tasks.filter((t) => t.status === "In Progress");
@@ -20,7 +28,10 @@ function TasksPage() {
           <h2>To Do</h2>
           <ul>
             {todo.map((task) => (
-              <li key={task.id}>{task.title}</li>
+              <li key={task.id}>
+                {task.title}{" "}
+                <button onClick={() => handleStatusChange(task.id, "In Progress")}>Start</button>
+              </li>
             ))}
           </ul>
         </div>
@@ -28,7 +39,11 @@ function TasksPage() {
           <h2>In Progress</h2>
           <ul>
             {inProgress.map((task) => (
-              <li key={task.id}>{task.title}</li>
+              <li key={task.id}>
+                {task.title}{" "}
+                <button onClick={() => handleStatusChange(task.id, "To Do")}>Back</button>{" "}
+                <button onClick={() => handleStatusChange(task.id, "Done")}>Done</button>
+              </li>
             ))}
           </ul>
         </div>
@@ -36,7 +51,10 @@ function TasksPage() {
           <h2>Done</h2>
           <ul>
             {done.map((task) => (
-              <li key={task.id}>{task.title}</li>
+              <li key={task.id}>
+                {task.title}{" "}
+                <button onClick={() => handleStatusChange(task.id, "In Progress")}>Reopen</button>
+              </li>
             ))}
           </ul>
         </div>
