@@ -4,10 +4,14 @@ import { getTasks, updateTaskStatus } from "../api/api";
 function TasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
   getTasks().then((data) => {
     setTasks(data);
+    setLoading(false);
+  }).catch(() => {
+    setError("Failed to load tasks.");
     setLoading(false);
   });
 }, []);
@@ -25,6 +29,7 @@ function TasksPage() {
   const done = tasks.filter((t) => t.status === "Done");
 
   if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div>
