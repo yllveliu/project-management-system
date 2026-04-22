@@ -3,10 +3,14 @@ import { getTasks, updateTaskStatus } from "../api/api";
 
 function TasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getTasks().then((data) => setTasks(data));
-  }, []);
+  getTasks().then((data) => {
+    setTasks(data);
+    setLoading(false);
+  });
+}, []);
 
   const handleStatusChange = (taskId: number, newStatus: string) => {
     updateTaskStatus(taskId, { status: newStatus }).then(() => {
@@ -19,6 +23,8 @@ function TasksPage() {
   const todo = tasks.filter((t) => t.status === "To Do");
   const inProgress = tasks.filter((t) => t.status === "In Progress");
   const done = tasks.filter((t) => t.status === "Done");
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div>

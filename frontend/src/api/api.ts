@@ -1,6 +1,10 @@
 const BASE_URL = "http://127.0.0.1:8000";
 
-export async function registerUser(full_name: string, email: string, password: string) {
+export async function registerUser(
+  full_name: string,
+  email: string,
+  password: string
+) {
   const response = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
