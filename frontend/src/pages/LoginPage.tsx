@@ -1,14 +1,26 @@
 import { useState } from "react";
-import { loginUser } from "../api/api";
+import { useNavigate } from "react-router-dom";
+import { loginUser, getMe } from "../api/api";
+import type { User } from "../App";
 
-export default function LoginPage() {
+export default function LoginPage({ setUser }: { setUser: (user: User) => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const response = await loginUser(email, password);
-    console.log(response);
+    setError("");
+    const data = await loginUser(email, password);
+    if (data.access_token) {
+      localStorage.setItem("token", data.access_token);
+      const me = await getMe();
+      if (me) setUser(me);
+      navigate("/projects");
+    } else {
+      setError(data.detail ?? "Invalid email or password.");
+    }
   };
 
   return (
@@ -37,6 +49,7 @@ export default function LoginPage() {
               className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
             />
           </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"
             className="w-full mt-2 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors duration-150"

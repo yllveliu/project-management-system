@@ -1,15 +1,26 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { registerUser } from "../api/api";
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const response = await registerUser(fullName, email, password);
-    console.log(response);
+    setError("");
+    const data = await registerUser(fullName, email, password);
+    if (data.id) {
+      setFullName("");
+      setEmail("");
+      setPassword("");
+      navigate("/login");
+    } else {
+      setError(data.detail ?? "Registration failed. Please try again.");
+    }
   };
 
   return (
@@ -48,6 +59,7 @@ export default function RegisterPage() {
               className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
             />
           </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"
             className="w-full mt-2 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors duration-150"

@@ -1,6 +1,15 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import type { User } from '../App';
 
-function Navbar() {
+function Navbar({ user, setUser }: { user: User | null; setUser: (user: User | null) => void }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    navigate('/login');
+  };
+
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `text-sm font-medium transition-colors duration-150 ${
       isActive ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-900'
@@ -13,27 +22,41 @@ function Navbar() {
           ProjectFlow
         </span>
         <div className="flex items-center gap-6">
-          <NavLink to="/projects" className={linkClass}>
-            Projects
-          </NavLink>
-          <NavLink to="/tasks" className={linkClass}>
-            Tasks
-          </NavLink>
-          <NavLink to="/login" className={linkClass}>
-            Login
-          </NavLink>
-          <NavLink
-            to="/register"
-            className={({ isActive }) =>
-              `text-sm font-medium px-4 py-1.5 rounded-lg transition-colors duration-150 ${
-                isActive
-                  ? 'bg-indigo-700 text-white'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
-              }`
-            }
-          >
-            Register
-          </NavLink>
+          {user ? (
+            <>
+              <NavLink to="/projects" className={linkClass}>
+                Projects
+              </NavLink>
+              <NavLink to="/tasks" className={linkClass}>
+                Tasks
+              </NavLink>
+              <span className="text-sm text-gray-500">{user.full_name}</span>
+              <button
+                onClick={handleLogout}
+                className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors duration-150"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login" className={linkClass}>
+                Login
+              </NavLink>
+              <NavLink
+                to="/register"
+                className={({ isActive }) =>
+                  `text-sm font-medium px-4 py-1.5 rounded-lg transition-colors duration-150 ${
+                    isActive
+                      ? 'bg-indigo-700 text-white'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  }`
+                }
+              >
+                Register
+              </NavLink>
+            </>
+          )}
         </div>
       </div>
     </nav>
