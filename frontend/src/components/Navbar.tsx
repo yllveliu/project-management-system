@@ -1,12 +1,41 @@
 import { NavLink } from 'react-router-dom';
 
 function Navbar() {
+  const linkClass = ({ isActive }: { isActive: boolean }) =>
+    `text-sm font-medium transition-colors duration-150 ${
+      isActive ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-900'
+    }`;
+
   return (
-    <nav style={{ display: 'flex', gap: '1rem', padding: '1rem', borderBottom: '1px solid #ccc' }}>
-      <NavLink to="/projects">Projects</NavLink>
-      <NavLink to="/tasks">Tasks</NavLink>
-      <NavLink to="/login">Login</NavLink>
-      <NavLink to="/register">Register</NavLink>
+    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <span className="text-base font-semibold text-gray-900 tracking-tight select-none">
+          ProjectFlow
+        </span>
+        <div className="flex items-center gap-6">
+          <NavLink to="/projects" className={linkClass}>
+            Projects
+          </NavLink>
+          <NavLink to="/tasks" className={linkClass}>
+            Tasks
+          </NavLink>
+          <NavLink to="/login" className={linkClass}>
+            Login
+          </NavLink>
+          <NavLink
+            to="/register"
+            className={({ isActive }) =>
+              `text-sm font-medium px-4 py-1.5 rounded-lg transition-colors duration-150 ${
+                isActive
+                  ? 'bg-indigo-700 text-white'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              }`
+            }
+          >
+            Register
+          </NavLink>
+        </div>
+      </div>
     </nav>
   );
 }
