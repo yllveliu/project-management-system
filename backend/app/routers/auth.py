@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.security import create_access_token, get_current_user, hash_password, verify_password
+from app.core.security import ADMIN_EMAIL, create_access_token, get_current_user, hash_password, verify_password
 from app.database import get_db
 from app.models.user import User
 from app.schemas.auth import TokenResponse, UserCreate, UserLogin, UserResponse
@@ -15,10 +15,12 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    role = "admin" if user_in.email == ADMIN_EMAIL else "employee"
     user = User(
         full_name=user_in.full_name,
         email=user_in.email,
         password_hash=hash_password(user_in.password),
+        role=role,
     )
     db.add(user)
     db.commit()

@@ -7,7 +7,6 @@ from pydantic import BaseModel
 class ProjectCreate(BaseModel):
     title: str
     description: Optional[str] = None
-    created_by: int
 
 
 class ProjectResponse(BaseModel):
