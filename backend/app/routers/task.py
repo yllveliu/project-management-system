@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -26,6 +27,11 @@ def create_task(task_in: TaskCreate, db: Session = Depends(get_db), current_user
     return task
 
 
+@router.get("/archived", response_model=list[TaskResponse])
+def get_archived_tasks(db: Session = Depends(get_db), current_user: User = Depends(require_admin)):
+    return db.query(Task).filter(Task.is_archived == True).order_by(Task.archived_at.desc()).all()
+
+
 @router.get("/", response_model=list[TaskResponse])
 def get_tasks(
     project_id: Optional[int] = None,
@@ -34,7 +40,7 @@ def get_tasks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    query = db.query(Task)
+    query = db.query(Task).filter(Task.is_archived == False)
     if current_user.role == "admin":
         if project_id is not None:
             query = query.filter(Task.project_id == project_id)
@@ -77,6 +83,20 @@ def delete_task(id: int, db: Session = Depends(get_db), current_user: User = Dep
     db.commit()
 
 
+@router.patch("/{id}/archive", response_model=TaskResponse)
+def archive_task(id: int, db: Session = Depends(get_db), current_user: User = Depends(require_admin)):
+    task = db.query(Task).filter(Task.id == id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.status != "Done":
+        raise HTTPException(status_code=400, detail="Only completed tasks can be archived")
+    task.is_archived = True
+    task.archived_at = datetime.now()
+    db.commit()
+    db.refresh(task)
+    return task
+
+
 @router.patch("/{id}/status", response_model=TaskResponse)
 def update_task_status(id: int, task_in: TaskStatusUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == id).first()
@@ -87,7 +107,18 @@ def update_task_status(id: int, task_in: TaskStatusUpdate, db: Session = Depends
     allowed = ["To Do", "In Progress", "Done"]
     if task_in.status not in allowed:
         raise HTTPException(status_code=400, detail="Invalid status")
+    previous_status = task.status
     task.status = task_in.status
+    if task_in.status == "In Progress":
+        if task.started_at is None:
+            task.started_at = datetime.now()
+        if previous_status == "Done":
+            task.completed_at = None
+    elif task_in.status == "Done":
+        task.completed_at = datetime.now()
+    elif task_in.status == "To Do":
+        if previous_status == "Done":
+            task.completed_at = None
     db.commit()
     db.refresh(task)
     return task

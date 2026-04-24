@@ -25,6 +25,10 @@ class TaskResponse(BaseModel):
     project_id: int
     assigned_to: Optional[int]
     created_at: datetime
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    is_archived: bool = False
+    archived_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 

@@ -77,6 +77,28 @@ export async function updateTaskStatus(id: number, data: object) {
   return response.json();
 }
 
+export async function deleteTask(id: number): Promise<void> {
+  await fetch(`${BASE_URL}/tasks/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+}
+
+export async function archiveTask(id: number) {
+  const response = await fetch(`${BASE_URL}/tasks/${id}/archive`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return response.json();
+}
+
+export async function getArchivedTasks() {
+  const response = await fetch(`${BASE_URL}/tasks/archived`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return response.json();
+}
+
 export interface UserSummary {
   id: number;
   full_name: string;
