@@ -18,7 +18,7 @@ function ProjectsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createProject({ title, description, created_by: 1 });
+    await createProject({ title, description });
     const data = await getProjects();
     setProjects(data);
     setTitle('');

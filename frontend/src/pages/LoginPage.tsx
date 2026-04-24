@@ -16,8 +16,10 @@ export default function LoginPage({ setUser }: { setUser: (user: User) => void }
     if (data.access_token) {
       localStorage.setItem("token", data.access_token);
       const me = await getMe();
-      if (me) setUser(me);
-      navigate("/projects");
+      if (me) {
+        setUser(me);
+        navigate(me.role === "admin" ? "/projects" : "/tasks");
+      }
     } else {
       setError(data.detail ?? "Invalid email or password.");
     }

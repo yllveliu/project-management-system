@@ -24,9 +24,11 @@ function Navbar({ user, setUser }: { user: User | null; setUser: (user: User | n
         <div className="flex items-center gap-6">
           {user ? (
             <>
-              <NavLink to="/projects" className={linkClass}>
-                Projects
-              </NavLink>
+              {user.role === "admin" && (
+                <NavLink to="/projects" className={linkClass}>
+                  Projects
+                </NavLink>
+              )}
               <NavLink to="/tasks" className={linkClass}>
                 Tasks
               </NavLink>

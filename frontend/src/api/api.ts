@@ -43,7 +43,7 @@ export async function getProjects() {
   return response.json();
 }
 
-export async function createProject(data: object) {
+export async function createProject(data: { title: string; description?: string }) {
   const response = await fetch(`${BASE_URL}/projects/`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },

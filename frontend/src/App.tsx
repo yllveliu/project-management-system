@@ -50,7 +50,7 @@ function App() {
               path="/projects"
               element={
                 <ProtectedRoute user={user} loading={loading}>
-                  <ProjectsPage />
+                  {user?.role === "admin" ? <ProjectsPage /> : <Navigate to="/tasks" replace />}
                 </ProtectedRoute>
               }
             />
