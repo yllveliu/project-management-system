@@ -1,21 +1,32 @@
 import { useEffect, useState } from "react";
-import { getTasks, updateTaskStatus } from "../api/api";
+import { getTasks, updateTaskStatus, createTask, getUsers } from "../api/api";
+import type { UserSummary } from "../api/api";
+import type { User } from "../App";
 
-function TasksPage() {
+function TasksPage({ user }: { user: User | null }) {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [users, setUsers] = useState<UserSummary[]>([]);
+  const [title, setTitle] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<number | "">("");
 
   useEffect(() => {
-  getTasks().then((data) => {
-    setTasks(data);
-    setLoading(false);
-  }).catch(() => {
-    setError("Failed to load tasks.");
-    setLoading(false);
-  });
-}, []);
+    getTasks()
+      .then((data) => {
+        setTasks(data);
+        setLoading(false);
+        if (user?.role === "admin") {
+          getUsers().then(setUsers);
+        }
+      })
+      .catch(() => {
+        setError("Failed to load tasks.");
+        setLoading(false);
+      });
+  }, []);
 
   const handleStatusChange = (taskId: number, newStatus: string) => {
   setUpdatingId(taskId);
@@ -30,6 +41,21 @@ function TasksPage() {
       setUpdatingId(null);
     });
 };
+
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !projectId) return;
+    await createTask({
+      title,
+      project_id: Number(projectId),
+      assigned_to: selectedUserId !== "" ? selectedUserId : null,
+    });
+    const data = await getTasks();
+    setTasks(data);
+    setTitle("");
+    setProjectId("");
+    setSelectedUserId("");
+  };
 
   const todo = tasks.filter((t) => t.status === "To Do");
   const inProgress = tasks.filter((t) => t.status === "In Progress");
@@ -138,6 +164,55 @@ function TasksPage() {
         </div>
 
       </div>
+
+      {user?.role === "admin" && (
+        <section className="mt-8 max-w-md">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-4">New Task</h2>
+            <form onSubmit={handleCreateTask} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Title</label>
+                <input
+                  type="text"
+                  placeholder="Task title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Project ID</label>
+                <input
+                  type="number"
+                  placeholder="Project ID"
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Assign to</label>
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value !== "" ? Number(e.target.value) : "")}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                >
+                  <option value="">Unassigned</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>{u.full_name}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="w-full mt-1 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors duration-150"
+              >
+                Create Task
+              </button>
+            </form>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

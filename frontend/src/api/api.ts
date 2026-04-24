@@ -76,3 +76,17 @@ export async function updateTaskStatus(id: number, data: object) {
   });
   return response.json();
 }
+
+export interface UserSummary {
+  id: number;
+  full_name: string;
+  email: string;
+  role: string;
+}
+
+export async function getUsers(): Promise<UserSummary[]> {
+  const response = await fetch(`${BASE_URL}/users/`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return response.json();
+}

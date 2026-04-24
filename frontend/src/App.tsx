@@ -58,7 +58,7 @@ function App() {
               path="/tasks"
               element={
                 <ProtectedRoute user={user} loading={loading}>
-                  <TasksPage />
+                  <TasksPage user={user} />
                 </ProtectedRoute>
               }
             />
