@@ -5,7 +5,9 @@ from app.database import engine, Base, get_db
 from app.models.user import User
 from app.models.project import Project
 from app.models.task import Task
-from app.routers import auth, project, task, user
+from app.models.comment import Comment
+from app.models.activity import Activity
+from app.routers import auth, project, task, user, comment, activity, dashboard
 
 app = FastAPI()
 
@@ -21,6 +23,9 @@ app.include_router(auth.router)
 app.include_router(project.router)
 app.include_router(task.router)
 app.include_router(user.router)
+app.include_router(comment.router)
+app.include_router(activity.router)
+app.include_router(dashboard.router)
 
 Base.metadata.create_all(bind=engine)
 

@@ -8,6 +8,7 @@ from app.core.security import get_current_user, require_admin
 from app.database import get_db
 from app.models.task import Task
 from app.models.user import User
+from app.routers.activity import log_activity
 from app.schemas.task import TaskCreate, TaskResponse, TaskStatusUpdate, TaskUpdate
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -26,6 +27,8 @@ def create_task(task_in: TaskCreate, db: Session = Depends(get_db), current_user
     db.add(task)
     db.commit()
     db.refresh(task)
+    log_activity(db, task.id, current_user.id, "Created task")
+    db.commit()
     return task
 
 
@@ -78,6 +81,8 @@ def update_task(id: int, task_in: TaskUpdate, db: Session = Depends(get_db), cur
         task.assigned_to = task_in.assigned_to
     db.commit()
     db.refresh(task)
+    log_activity(db, task.id, current_user.id, "Edited task")
+    db.commit()
     return task
 
 
@@ -101,6 +106,8 @@ def archive_task(id: int, db: Session = Depends(get_db), current_user: User = De
     task.archived_at = datetime.now()
     db.commit()
     db.refresh(task)
+    log_activity(db, task.id, current_user.id, "Archived task")
+    db.commit()
     return task
 
 
@@ -131,4 +138,9 @@ def update_task_status(id: int, task_in: TaskStatusUpdate, db: Session = Depends
             task.completed_at = None
     db.commit()
     db.refresh(task)
+    if task_in.status == "Done":
+        log_activity(db, task.id, current_user.id, f"Marked as Done")
+    else:
+        log_activity(db, task.id, current_user.id, f"Status changed to {task_in.status}")
+    db.commit()
     return task

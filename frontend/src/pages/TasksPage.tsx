@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getTasks, updateTaskStatus, createTask, updateTask, getUsers, archiveTask, getArchivedTasks, getProjects } from "../api/api";
+import { getTasks, updateTaskStatus, createTask, updateTask, getUsers, archiveTask, getArchivedTasks, getProjects, getTaskComments, createComment, getTaskActivity } from "../api/api";
 import type { UserSummary } from "../api/api";
 import type { User } from "../App";
 
@@ -33,6 +33,11 @@ function TasksPage({ user }: { user: User | null }) {
   const [editPriority, setEditPriority] = useState("Medium");
   const [editDueDate, setEditDueDate] = useState("");
   const [editAssignedTo, setEditAssignedTo] = useState<number | "">("");
+  const [showCommentsTaskId, setShowCommentsTaskId] = useState<number | null>(null);
+  const [commentsMap, setCommentsMap] = useState<Record<number, any[]>>({});
+  const [commentInputMap, setCommentInputMap] = useState<Record<number, string>>({});
+  const [showActivityTaskId, setShowActivityTaskId] = useState<number | null>(null);
+  const [activityMap, setActivityMap] = useState<Record<number, any[]>>({});
 
   useEffect(() => {
     if (user?.role === "admin") {
@@ -99,6 +104,38 @@ function TasksPage({ user }: { user: User | null }) {
     await archiveTask(id);
     setTasks((prev) => prev.filter((t) => t.id !== id));
     getArchivedTasks().then(setArchivedTasks).catch(() => {});
+  };
+
+  const handleToggleComments = async (taskId: number) => {
+    if (showCommentsTaskId === taskId) {
+      setShowCommentsTaskId(null);
+      return;
+    }
+    setShowCommentsTaskId(taskId);
+    setShowActivityTaskId(null);
+    if (!commentsMap[taskId]) {
+      const data = await getTaskComments(taskId);
+      setCommentsMap((prev) => ({ ...prev, [taskId]: data }));
+    }
+  };
+
+  const handleToggleActivity = async (taskId: number) => {
+    if (showActivityTaskId === taskId) {
+      setShowActivityTaskId(null);
+      return;
+    }
+    setShowActivityTaskId(taskId);
+    setShowCommentsTaskId(null);
+    const data = await getTaskActivity(taskId);
+    setActivityMap((prev) => ({ ...prev, [taskId]: data }));
+  };
+
+  const handleAddComment = async (taskId: number) => {
+    const content = commentInputMap[taskId]?.trim();
+    if (!content) return;
+    const newComment = await createComment({ content, task_id: taskId });
+    setCommentsMap((prev) => ({ ...prev, [taskId]: [...(prev[taskId] ?? []), newComment] }));
+    setCommentInputMap((prev) => ({ ...prev, [taskId]: "" }));
   };
 
   const handleStartEdit = (task: any) => {
@@ -244,7 +281,7 @@ function TasksPage({ user }: { user: User | null }) {
           {todo.map((task) => (
             <div
               key={task.id}
-              className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-150 border ${editingTaskId === task.id ? "" : "flex items-center justify-between gap-2"} ${
+              className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-150 border ${
                 task.assigned_to === user?.id
                   ? "bg-blue-50 border-blue-300"
                   : "bg-white border-gray-200"
@@ -309,39 +346,96 @@ function TasksPage({ user }: { user: User | null }) {
                 </div>
               ) : (
                 <>
-                  <div>
-                    <span className="text-sm text-gray-800 font-medium">{task.title}</span>
-                    <p className="text-xs text-gray-500 mt-0.5">Project: {projects.find((p) => p.id === task.project_id)?.title ?? `#${task.project_id}`}</p>
-                    {task.description && (
-                      <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
-                    )}
-                    {task.assigned_to && (
-                      <p className="text-xs text-gray-400 mt-0.5">Assigned to: {task.assigned_to === user?.id ? "You" : users.find((u) => u.id === task.assigned_to)?.full_name}</p>
-                    )}
-                    <div className="flex items-center gap-1.5 mt-1.5">
-                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
-                      {task.due_date && (
-                        <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-sm text-gray-800 font-medium">{task.title}</span>
+                      <p className="text-xs text-gray-500 mt-0.5">Project: {projects.find((p) => p.id === task.project_id)?.title ?? `#${task.project_id}`}</p>
+                      {task.description && (
+                        <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
                       )}
+                      {task.assigned_to && (
+                        <p className="text-xs text-gray-400 mt-0.5">Assigned to: {task.assigned_to === user?.id ? "You" : users.find((u) => u.id === task.assigned_to)?.full_name}</p>
+                      )}
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
+                        {task.due_date && (
+                          <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {user?.role === "admin" && (
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
-                        onClick={() => handleStartEdit(task)}
+                        onClick={() => handleToggleComments(task.id)}
                         className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
                       >
-                        Edit
+                        {showCommentsTaskId === task.id ? "Hide" : "Comments"}
                       </button>
-                    )}
-                    <button
-                      disabled={updatingId === task.id}
-                      onClick={() => handleStatusChange(task.id, "In Progress")}
-                      className="text-xs font-medium px-3 py-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      Start
-                    </button>
+                      <button
+                        onClick={() => handleToggleActivity(task.id)}
+                        className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
+                      >
+                        {showActivityTaskId === task.id ? "Hide" : "Activity"}
+                      </button>
+                      {user?.role === "admin" && (
+                        <button
+                          onClick={() => handleStartEdit(task)}
+                          className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      <button
+                        disabled={updatingId === task.id}
+                        onClick={() => handleStatusChange(task.id, "In Progress")}
+                        className="text-xs font-medium px-3 py-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Start
+                      </button>
+                    </div>
                   </div>
+                  {showCommentsTaskId === task.id && (
+                    <div className="border-t border-gray-100 pt-2 flex flex-col gap-2">
+                      {(commentsMap[task.id] ?? []).length === 0 && (
+                        <p className="text-xs text-gray-400">No comments yet.</p>
+                      )}
+                      {(commentsMap[task.id] ?? []).map((c) => (
+                        <div key={c.id} className="text-xs text-gray-700">
+                          <span className="font-medium">{c.author_name ?? "User"}:</span>{" "}
+                          {c.content}
+                          <span className="ml-1 text-gray-400">{new Date(c.created_at).toLocaleString("en-GB", { hour12: false })}</span>
+                        </div>
+                      ))}
+                      <div className="flex gap-2 mt-1">
+                        <input
+                          type="text"
+                          value={commentInputMap[task.id] ?? ""}
+                          onChange={(e) => setCommentInputMap((prev) => ({ ...prev, [task.id]: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddComment(task.id); } }}
+                          placeholder="Add a comment..."
+                          className="flex-1 px-2 py-1 rounded border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        />
+                        <button
+                          onClick={() => handleAddComment(task.id)}
+                          className="text-xs font-medium px-2 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                        >
+                          Post
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {showActivityTaskId === task.id && (
+                    <div className="border-t border-gray-100 pt-2 flex flex-col gap-1">
+                      {(activityMap[task.id] ?? []).length === 0 && (
+                        <p className="text-xs text-gray-400">No activity yet.</p>
+                      )}
+                      {(activityMap[task.id] ?? []).map((a) => (
+                        <div key={a.id} className="text-xs text-gray-500">
+                          <span className="font-medium text-gray-700">{a.actor_name ?? "User"}</span>{" "}{a.action}
+                          <span className="ml-1 text-gray-400">{new Date(a.created_at).toLocaleString("en-GB", { hour12: false })}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -361,7 +455,7 @@ function TasksPage({ user }: { user: User | null }) {
           {inProgress.map((task) => (
             <div
               key={task.id}
-              className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-150 border ${editingTaskId === task.id ? "" : "flex items-center justify-between gap-2"} ${
+              className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-150 border ${
                 task.assigned_to === user?.id
                   ? "bg-blue-50 border-blue-300"
                   : "bg-white border-gray-200"
@@ -426,74 +520,131 @@ function TasksPage({ user }: { user: User | null }) {
                 </div>
               ) : (
                 <>
-                  <div>
-                    <span className="text-sm text-gray-800 font-medium">{task.title}</span>
-                    <p className="text-xs text-gray-500 mt-0.5">Project: {projects.find((p) => p.id === task.project_id)?.title ?? `#${task.project_id}`}</p>
-                    {task.description && (
-                      <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
-                    )}
-                    {task.assigned_to && (
-                      <p className="text-xs text-gray-400 mt-0.5">Assigned to: {task.assigned_to === user?.id ? "You" : users.find((u) => u.id === task.assigned_to)?.full_name}</p>
-                    )}
-                    {task.started_at && (
-                      <p className="text-xs text-gray-400 mt-0.5">Started: {new Date(task.started_at).toLocaleString("en-GB", { timeZone: "Europe/Belgrade", hour12: false })}</p>
-                    )}
-                    <div className="flex items-center gap-1.5 mt-1.5">
-                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
-                      {task.due_date && (
-                        <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-sm text-gray-800 font-medium">{task.title}</span>
+                      <p className="text-xs text-gray-500 mt-0.5">Project: {projects.find((p) => p.id === task.project_id)?.title ?? `#${task.project_id}`}</p>
+                      {task.description && (
+                        <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
                       )}
+                      {task.assigned_to && (
+                        <p className="text-xs text-gray-400 mt-0.5">Assigned to: {task.assigned_to === user?.id ? "You" : users.find((u) => u.id === task.assigned_to)?.full_name}</p>
+                      )}
+                      {task.started_at && (
+                        <p className="text-xs text-gray-400 mt-0.5">Started: {new Date(task.started_at).toLocaleString("en-GB", { timeZone: "Europe/Belgrade", hour12: false })}</p>
+                      )}
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
+                        {task.due_date && (
+                          <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  {pendingDoneTaskId === task.id ? (
-                    <div className="flex flex-col gap-1.5 shrink-0 w-44">
-                      <textarea
-                        placeholder="Describe what was done, changes made, or issues resolved..."
-                        value={completionNote}
-                        onChange={(e) => setCompletionNote(e.target.value)}
-                        rows={4}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-                      />
-                      <div className="flex gap-1">
+                    {pendingDoneTaskId === task.id ? (
+                      <div className="flex flex-col gap-1.5 shrink-0 w-44">
+                        <textarea
+                          placeholder="Describe what was done, changes made, or issues resolved..."
+                          value={completionNote}
+                          onChange={(e) => setCompletionNote(e.target.value)}
+                          rows={4}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                        />
+                        <div className="flex gap-1">
+                          <button
+                            disabled={updatingId === task.id}
+                            onClick={() => handleSubmitDone(task.id)}
+                            className="flex-1 text-xs font-medium px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            Submit
+                          </button>
+                          <button
+                            onClick={() => { setPendingDoneTaskId(null); setCompletionNote(""); }}
+                            className="flex-1 text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
-                          disabled={updatingId === task.id}
-                          onClick={() => handleSubmitDone(task.id)}
-                          className="flex-1 text-xs font-medium px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                          onClick={() => handleToggleComments(task.id)}
+                          className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
                         >
-                          Submit
+                          {showCommentsTaskId === task.id ? "Hide" : "Comments"}
                         </button>
                         <button
-                          onClick={() => { setPendingDoneTaskId(null); setCompletionNote(""); }}
-                          className="flex-1 text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
+                          onClick={() => handleToggleActivity(task.id)}
+                          className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
                         >
-                          Cancel
+                          {showActivityTaskId === task.id ? "Hide" : "Activity"}
+                        </button>
+                        <button
+                          disabled={updatingId === task.id}
+                          onClick={() => handleStatusChange(task.id, "To Do")}
+                          className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Back
+                        </button>
+                        <button
+                          disabled={updatingId === task.id}
+                          onClick={() => handleStatusChange(task.id, "Done")}
+                          className="text-xs font-medium px-3 py-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Done
+                        </button>
+                        {user?.role === "admin" && (
+                          <button
+                            onClick={() => handleStartEdit(task)}
+                            className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {showCommentsTaskId === task.id && pendingDoneTaskId !== task.id && (
+                    <div className="border-t border-gray-100 pt-2 flex flex-col gap-2">
+                      {(commentsMap[task.id] ?? []).length === 0 && (
+                        <p className="text-xs text-gray-400">No comments yet.</p>
+                      )}
+                      {(commentsMap[task.id] ?? []).map((c) => (
+                        <div key={c.id} className="text-xs text-gray-700">
+                          <span className="font-medium">{c.author_name ?? "User"}:</span>{" "}
+                          {c.content}
+                          <span className="ml-1 text-gray-400">{new Date(c.created_at).toLocaleString("en-GB", { hour12: false })}</span>
+                        </div>
+                      ))}
+                      <div className="flex gap-2 mt-1">
+                        <input
+                          type="text"
+                          value={commentInputMap[task.id] ?? ""}
+                          onChange={(e) => setCommentInputMap((prev) => ({ ...prev, [task.id]: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddComment(task.id); } }}
+                          placeholder="Add a comment..."
+                          className="flex-1 px-2 py-1 rounded border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        />
+                        <button
+                          onClick={() => handleAddComment(task.id)}
+                          className="text-xs font-medium px-2 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                        >
+                          Post
                         </button>
                       </div>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        disabled={updatingId === task.id}
-                        onClick={() => handleStatusChange(task.id, "To Do")}
-                        className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        Back
-                      </button>
-                      <button
-                        disabled={updatingId === task.id}
-                        onClick={() => handleStatusChange(task.id, "Done")}
-                        className="text-xs font-medium px-3 py-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        Done
-                      </button>
-                      {user?.role === "admin" && (
-                        <button
-                          onClick={() => handleStartEdit(task)}
-                          className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
-                        >
-                          Edit
-                        </button>
+                  )}
+                  {showActivityTaskId === task.id && pendingDoneTaskId !== task.id && (
+                    <div className="border-t border-gray-100 pt-2 flex flex-col gap-1">
+                      {(activityMap[task.id] ?? []).length === 0 && (
+                        <p className="text-xs text-gray-400">No activity yet.</p>
                       )}
+                      {(activityMap[task.id] ?? []).map((a) => (
+                        <div key={a.id} className="text-xs text-gray-500">
+                          <span className="font-medium text-gray-700">{a.actor_name ?? "User"}</span>{" "}{a.action}
+                          <span className="ml-1 text-gray-400">{new Date(a.created_at).toLocaleString("en-GB", { hour12: false })}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </>
@@ -519,7 +670,7 @@ function TasksPage({ user }: { user: User | null }) {
             {done.map((task) => (
               <div
                 key={task.id}
-                className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-150 border ${editingTaskId === task.id ? "" : "flex items-center justify-between gap-2"} ${
+                className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-150 border ${
                   task.assigned_to === user?.id
                     ? "bg-blue-50 border-blue-300"
                     : "bg-white border-gray-200"
@@ -584,52 +735,111 @@ function TasksPage({ user }: { user: User | null }) {
                   </div>
                 ) : (
                   <>
-                    <div>
-                      <span className="text-sm text-gray-500 font-medium line-through">{task.title}</span>
-                      <p className="text-xs text-gray-500 mt-0.5">Project: {projects.find((p) => p.id === task.project_id)?.title ?? `#${task.project_id}`}</p>
-                      {task.description && (
-                        <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
-                      )}
-                      {task.assigned_to && (
-                        <p className="text-xs text-gray-400 mt-0.5">Assigned to: {task.assigned_to === user?.id ? "You" : users.find((u) => u.id === task.assigned_to)?.full_name}</p>
-                      )}
-                      {task.started_at && (
-                        <p className="text-xs text-gray-400 mt-0.5">Started: {new Date(task.started_at).toLocaleString("en-GB", { timeZone: "Europe/Belgrade", hour12: false })}</p>
-                      )}
-                      {task.completed_at && (
-                        <p className="text-xs text-gray-400 mt-0.5">Completed: {new Date(task.completed_at).toLocaleString("en-GB", { timeZone: "Europe/Belgrade", hour12: false })}</p>
-                      )}
-                      {task.completion_note && (
-                        <p className="text-xs text-gray-500 mt-0.5">Work done: {task.completion_note}</p>
-                      )}
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
-                        {task.due_date && (
-                          <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-sm text-gray-500 font-medium line-through">{task.title}</span>
+                        <p className="text-xs text-gray-500 mt-0.5">Project: {projects.find((p) => p.id === task.project_id)?.title ?? `#${task.project_id}`}</p>
+                        {task.description && (
+                          <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
+                        )}
+                        {task.assigned_to && (
+                          <p className="text-xs text-gray-400 mt-0.5">Assigned to: {task.assigned_to === user?.id ? "You" : users.find((u) => u.id === task.assigned_to)?.full_name}</p>
+                        )}
+                        {task.started_at && (
+                          <p className="text-xs text-gray-400 mt-0.5">Started: {new Date(task.started_at).toLocaleString("en-GB", { timeZone: "Europe/Belgrade", hour12: false })}</p>
+                        )}
+                        {task.completed_at && (
+                          <p className="text-xs text-gray-400 mt-0.5">Completed: {new Date(task.completed_at).toLocaleString("en-GB", { timeZone: "Europe/Belgrade", hour12: false })}</p>
+                        )}
+                        {task.completion_note && (
+                          <p className="text-xs text-gray-500 mt-0.5">Work done: {task.completion_note}</p>
+                        )}
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
+                          {task.due_date && (
+                            <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => handleToggleComments(task.id)}
+                          className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
+                        >
+                          {showCommentsTaskId === task.id ? "Hide" : "Comments"}
+                        </button>
+                        <button
+                          onClick={() => handleToggleActivity(task.id)}
+                          className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
+                        >
+                          {showActivityTaskId === task.id ? "Hide" : "Activity"}
+                        </button>
+                        {user?.role === "admin" && (
+                          <>
+                            <button
+                              onClick={() => handleStartEdit(task)}
+                              className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              disabled={updatingId === task.id}
+                              onClick={() => handleStatusChange(task.id, "In Progress")}
+                              className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              Reopen
+                            </button>
+                            <button
+                              onClick={() => handleArchiveTask(task.id)}
+                              className="text-xs font-medium px-3 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors duration-150"
+                            >
+                              Archive
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
-                    {user?.role === "admin" && (
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => handleStartEdit(task)}
-                          className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          disabled={updatingId === task.id}
-                          onClick={() => handleStatusChange(task.id, "In Progress")}
-                          className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          Reopen
-                        </button>
-                        <button
-                          onClick={() => handleArchiveTask(task.id)}
-                          className="text-xs font-medium px-3 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors duration-150"
-                        >
-                          Archive
-                        </button>
+                    {showCommentsTaskId === task.id && (
+                      <div className="border-t border-gray-100 pt-2 flex flex-col gap-2">
+                        {(commentsMap[task.id] ?? []).length === 0 && (
+                          <p className="text-xs text-gray-400">No comments yet.</p>
+                        )}
+                        {(commentsMap[task.id] ?? []).map((c) => (
+                          <div key={c.id} className="text-xs text-gray-700">
+                            <span className="font-medium">{c.author_name ?? "User"}:</span>{" "}
+                            {c.content}
+                            <span className="ml-1 text-gray-400">{new Date(c.created_at).toLocaleString("en-GB", { hour12: false })}</span>
+                          </div>
+                        ))}
+                        <div className="flex gap-2 mt-1">
+                          <input
+                            type="text"
+                            value={commentInputMap[task.id] ?? ""}
+                            onChange={(e) => setCommentInputMap((prev) => ({ ...prev, [task.id]: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddComment(task.id); } }}
+                            placeholder="Add a comment..."
+                            className="flex-1 px-2 py-1 rounded border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                          />
+                          <button
+                            onClick={() => handleAddComment(task.id)}
+                            className="text-xs font-medium px-2 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                          >
+                            Post
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {showActivityTaskId === task.id && (
+                      <div className="border-t border-gray-100 pt-2 flex flex-col gap-1">
+                        {(activityMap[task.id] ?? []).length === 0 && (
+                          <p className="text-xs text-gray-400">No activity yet.</p>
+                        )}
+                        {(activityMap[task.id] ?? []).map((a) => (
+                          <div key={a.id} className="text-xs text-gray-500">
+                            <span className="font-medium text-gray-700">{a.actor_name ?? "User"}</span>{" "}{a.action}
+                            <span className="ml-1 text-gray-400">{new Date(a.created_at).toLocaleString("en-GB", { hour12: false })}</span>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </>

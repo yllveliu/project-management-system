@@ -25,6 +25,11 @@ function Navbar({ user, setUser }: { user: User | null; setUser: (user: User | n
           {user ? (
             <>
               {user.role === "admin" && (
+                <NavLink to="/dashboard" className={linkClass}>
+                  Dashboard
+                </NavLink>
+              )}
+              {user.role === "admin" && (
                 <NavLink to="/projects" className={linkClass}>
                   Projects
                 </NavLink>

@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { getMe } from './api/api';
+import DashboardPage from './pages/DashboardPage';
 
 export type User = {
   id: number;
@@ -59,6 +60,14 @@ function App() {
               element={
                 <ProtectedRoute user={user} loading={loading}>
                   <TasksPage user={user} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute user={user} loading={loading}>
+                  {user?.role === "admin" ? <DashboardPage user={user} /> : <Navigate to="/tasks" replace />}
                 </ProtectedRoute>
               }
             />

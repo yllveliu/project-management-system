@@ -18,3 +18,5 @@ class User(Base):
 
     tasks = relationship("Task", back_populates="assignee")
     projects = relationship("Project", back_populates="user")
+    comments = relationship("Comment", back_populates="author")
+    activities = relationship("Activity", back_populates="actor")

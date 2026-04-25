@@ -148,3 +148,36 @@ export async function getUsers(): Promise<UserSummary[]> {
   });
   return response.json();
 }
+
+export async function getTaskComments(taskId: number) {
+  const response = await fetch(`${BASE_URL}/tasks/${taskId}/comments`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return response.json();
+}
+
+export async function createComment(data: { content: string; task_id: number }) {
+  const response = await fetch(`${BASE_URL}/comments/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function getTaskActivity(taskId: number) {
+  const response = await fetch(`${BASE_URL}/tasks/${taskId}/activity`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return response.json();
+}
+
+export async function getDashboardStats(projectId?: number) {
+  const url = projectId !== undefined
+    ? `${BASE_URL}/dashboard/stats?project_id=${projectId}`
+    : `${BASE_URL}/dashboard/stats`;
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return response.json();
+}
