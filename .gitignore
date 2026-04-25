@@ -19,4 +19,4 @@ Thumbs.db
 .vscode/
 
 # Logs
-*.log
+*.logbackend/test.db 

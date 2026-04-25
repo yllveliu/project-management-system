@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getProjects, createProject } from '../api/api';
 
 interface Project {
@@ -13,6 +14,7 @@ interface Project {
 }
 
 function ProjectsPage() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -63,7 +65,8 @@ function ProjectsPage() {
             {projects.map((project) => (
               <div
                 key={project.id}
-                className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-150 p-5"
+                onClick={() => navigate(`/projects/${project.id}`)}
+                className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-150 p-5 cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h2 className="text-base font-semibold text-gray-900">{project.title}</h2>

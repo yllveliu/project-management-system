@@ -181,3 +181,10 @@ export async function getDashboardStats(projectId?: number) {
   });
   return response.json();
 }
+
+export async function getProjectDetails(id: number) {
+  const response = await fetch(`${BASE_URL}/projects/${id}/details`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return response.json();
+}
