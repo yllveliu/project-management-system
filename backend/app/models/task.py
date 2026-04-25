@@ -22,6 +22,7 @@ class Task(Base):
     completed_at = Column(DateTime, nullable=True)
     is_archived = Column(Boolean, default=False, nullable=False)
     archived_at = Column(DateTime, nullable=True)
+    completion_note = Column(String, nullable=True)
 
     project = relationship("Project", back_populates="tasks")
     assignee = relationship("User", back_populates="tasks")

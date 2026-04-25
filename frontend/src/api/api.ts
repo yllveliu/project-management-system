@@ -43,7 +43,15 @@ export async function getProjects() {
   return response.json();
 }
 
-export async function createProject(data: { title: string; description?: string }) {
+export async function createProject(data: {
+  title: string;
+  description?: string;
+  client_name?: string;
+  start_date?: string;
+  deadline?: string;
+  priority?: string;
+  status?: string;
+}) {
   const response = await fetch(`${BASE_URL}/projects/`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
@@ -52,16 +60,44 @@ export async function createProject(data: { title: string; description?: string 
   return response.json();
 }
 
-export async function getTasks() {
-  const response = await fetch(`${BASE_URL}/tasks/`, {
+export async function getTasks(params?: { project_id?: number }) {
+  const query = new URLSearchParams();
+  if (params?.project_id !== undefined) {
+    query.set("project_id", String(params.project_id));
+  }
+  const queryString = query.toString();
+  const url = `${BASE_URL}/tasks/${queryString ? `?${queryString}` : ""}`;
+  const response = await fetch(url, {
     headers: { Authorization: `Bearer ${getToken()}` },
   });
   return response.json();
 }
 
-export async function createTask(data: object) {
+export async function createTask(data: {
+  title: string;
+  description?: string;
+  project_id: number;
+  assigned_to?: number | null;
+  priority?: string;
+  due_date?: string;
+}) {
   const response = await fetch(`${BASE_URL}/tasks/`, {
     method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function updateTask(id: number, data: {
+  title?: string;
+  description?: string | null;
+  priority?: string;
+  due_date?: string | null;
+  assigned_to?: number | null;
+}) {
+  const response = await fetch(`${BASE_URL}/tasks/${id}`, {
+    method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
     body: JSON.stringify(data),
   });

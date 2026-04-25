@@ -15,6 +15,11 @@ def create_project(project_in: ProjectCreate, db: Session = Depends(get_db), cur
     project = Project(
         title=project_in.title,
         description=project_in.description,
+        client_name=project_in.client_name,
+        start_date=project_in.start_date,
+        deadline=project_in.deadline,
+        priority=project_in.priority or "Medium",
+        status=project_in.status or "Active",
         created_by=current_user.id,
     )
     db.add(project)

@@ -20,6 +20,8 @@ def create_task(task_in: TaskCreate, db: Session = Depends(get_db), current_user
         description=task_in.description,
         project_id=task_in.project_id,
         assigned_to=task_in.assigned_to,
+        priority=task_in.priority or "Medium",
+        due_date=task_in.due_date,
     )
     db.add(task)
     db.commit()
@@ -63,11 +65,16 @@ def update_task(id: int, task_in: TaskUpdate, db: Session = Depends(get_db), cur
     task = db.query(Task).filter(Task.id == id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    if task_in.title is not None:
+    fields = task_in.model_fields_set
+    if "title" in fields and task_in.title is not None:
         task.title = task_in.title
-    if task_in.description is not None:
+    if "description" in fields:
         task.description = task_in.description
-    if task_in.assigned_to is not None:
+    if "priority" in fields and task_in.priority is not None:
+        task.priority = task_in.priority
+    if "due_date" in fields:
+        task.due_date = task_in.due_date
+    if "assigned_to" in fields:
         task.assigned_to = task_in.assigned_to
     db.commit()
     db.refresh(task)
@@ -115,7 +122,10 @@ def update_task_status(id: int, task_in: TaskStatusUpdate, db: Session = Depends
         if previous_status == "Done":
             task.completed_at = None
     elif task_in.status == "Done":
+        if not task_in.completion_note:
+            raise HTTPException(status_code=400, detail="completion_note is required when marking a task as Done")
         task.completed_at = datetime.now()
+        task.completion_note = task_in.completion_note
     elif task_in.status == "To Do":
         if previous_status == "Done":
             task.completed_at = None
