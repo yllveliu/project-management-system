@@ -120,6 +120,20 @@ export async function deleteTask(id: number): Promise<void> {
   });
 }
 
+export async function deleteTaskPermanent(id: number): Promise<void> {
+  await fetch(`${BASE_URL}/tasks/${id}/permanent`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+}
+
+export async function deleteProject(id: number): Promise<void> {
+  await fetch(`${BASE_URL}/projects/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+}
+
 export async function archiveTask(id: number) {
   const response = await fetch(`${BASE_URL}/tasks/${id}/archive`, {
     method: "PATCH",
@@ -184,6 +198,13 @@ export async function getDashboardStats(projectId?: number) {
 
 export async function getProjectDetails(id: number) {
   const response = await fetch(`${BASE_URL}/projects/${id}/details`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return response.json();
+}
+
+export async function exportProject(id: number) {
+  const response = await fetch(`${BASE_URL}/projects/${id}/export`, {
     headers: { Authorization: `Bearer ${getToken()}` },
   });
   return response.json();

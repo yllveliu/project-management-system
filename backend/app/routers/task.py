@@ -95,6 +95,17 @@ def delete_task(id: int, db: Session = Depends(get_db), current_user: User = Dep
     db.commit()
 
 
+@router.delete("/{id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
+def permanent_delete_task(id: int, db: Session = Depends(get_db), current_user: User = Depends(require_admin)):
+    task = db.query(Task).filter(Task.id == id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if not task.is_archived:
+        raise HTTPException(status_code=400, detail="Only archived tasks can be permanently deleted")
+    db.delete(task)
+    db.commit()
+
+
 @router.patch("/{id}/archive", response_model=TaskResponse)
 def archive_task(id: int, db: Session = Depends(get_db), current_user: User = Depends(require_admin)):
     task = db.query(Task).filter(Task.id == id).first()

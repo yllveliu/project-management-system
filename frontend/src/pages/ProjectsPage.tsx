@@ -16,6 +16,8 @@ interface Project {
 function ProjectsPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [clientName, setClientName] = useState('');
@@ -25,29 +27,39 @@ function ProjectsPage() {
   const [status, setStatus] = useState('Active');
 
   useEffect(() => {
-    getProjects().then((data) => setProjects(data));
+    getProjects()
+      .then((data) => setProjects(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createProject({
-      title,
-      description: description || undefined,
-      client_name: clientName || undefined,
-      start_date: startDate || undefined,
-      deadline: deadline || undefined,
-      priority,
-      status,
-    });
-    const data = await getProjects();
-    setProjects(data);
-    setTitle('');
-    setDescription('');
-    setClientName('');
-    setStartDate('');
-    setDeadline('');
-    setPriority('Medium');
-    setStatus('Active');
+    setSubmitting(true);
+    try {
+      await createProject({
+        title,
+        description: description || undefined,
+        client_name: clientName || undefined,
+        start_date: startDate || undefined,
+        deadline: deadline || undefined,
+        priority,
+        status,
+      });
+      const data = await getProjects();
+      setProjects(data);
+      setTitle('');
+      setDescription('');
+      setClientName('');
+      setStartDate('');
+      setDeadline('');
+      setPriority('Medium');
+      setStatus('Active');
+    } catch {
+      alert('Failed to create project.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -56,9 +68,11 @@ function ProjectsPage() {
 
       {/* Project cards grid */}
       <section className="mb-8">
-        {projects.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-gray-400 text-center py-12">Loading...</p>
+        ) : projects.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-12">
-            No projects yet. Create one below.
+            Create your first project below.
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -190,9 +204,10 @@ function ProjectsPage() {
             </div>
             <button
               type="submit"
-              className="w-full mt-1 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors duration-150"
+              disabled={submitting}
+              className="w-full mt-1 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Create Project
+              {submitting ? 'Creating...' : 'Create Project'}
             </button>
           </form>
         </div>

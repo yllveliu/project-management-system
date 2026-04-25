@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getTasks, updateTaskStatus, createTask, updateTask, getUsers, archiveTask, getArchivedTasks, getProjects, getTaskComments, createComment, getTaskActivity } from "../api/api";
+import { getTasks, updateTaskStatus, createTask, updateTask, getUsers, archiveTask, getArchivedTasks, getProjects, getTaskComments, createComment, getTaskActivity, deleteTaskPermanent } from "../api/api";
 import type { UserSummary } from "../api/api";
 import type { User } from "../App";
 
@@ -33,6 +33,7 @@ function TasksPage({ user }: { user: User | null }) {
   const [editPriority, setEditPriority] = useState("Medium");
   const [editDueDate, setEditDueDate] = useState("");
   const [editAssignedTo, setEditAssignedTo] = useState<number | "">("");
+  const [submitting, setSubmitting] = useState(false);
   const [showCommentsTaskId, setShowCommentsTaskId] = useState<number | null>(null);
   const [commentsMap, setCommentsMap] = useState<Record<number, any[]>>({});
   const [commentInputMap, setCommentInputMap] = useState<Record<number, string>>({});
@@ -101,9 +102,14 @@ function TasksPage({ user }: { user: User | null }) {
 };
 
   const handleArchiveTask = async (id: number) => {
-    await archiveTask(id);
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-    getArchivedTasks().then(setArchivedTasks).catch(() => {});
+    if (!window.confirm("Archive this task?")) return;
+    try {
+      await archiveTask(id);
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+      getArchivedTasks().then(setArchivedTasks).catch(() => {});
+    } catch {
+      alert("Failed to archive task.");
+    }
   };
 
   const handleToggleComments = async (taskId: number) => {
@@ -133,9 +139,13 @@ function TasksPage({ user }: { user: User | null }) {
   const handleAddComment = async (taskId: number) => {
     const content = commentInputMap[taskId]?.trim();
     if (!content) return;
-    const newComment = await createComment({ content, task_id: taskId });
-    setCommentsMap((prev) => ({ ...prev, [taskId]: [...(prev[taskId] ?? []), newComment] }));
-    setCommentInputMap((prev) => ({ ...prev, [taskId]: "" }));
+    try {
+      const newComment = await createComment({ content, task_id: taskId });
+      setCommentsMap((prev) => ({ ...prev, [taskId]: [...(prev[taskId] ?? []), newComment] }));
+      setCommentInputMap((prev) => ({ ...prev, [taskId]: "" }));
+    } catch {
+      alert("Failed to post comment.");
+    }
   };
 
   const handleStartEdit = (task: any) => {
@@ -148,15 +158,19 @@ function TasksPage({ user }: { user: User | null }) {
   };
 
   const handleSaveEdit = async (taskId: number) => {
-    const updated = await updateTask(taskId, {
-      title: editTitle,
-      description: editDescription || null,
-      priority: editPriority,
-      due_date: editDueDate || null,
-      assigned_to: editAssignedTo !== "" ? (editAssignedTo as number) : null,
-    });
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
-    setEditingTaskId(null);
+    try {
+      const updated = await updateTask(taskId, {
+        title: editTitle,
+        description: editDescription || null,
+        priority: editPriority,
+        due_date: editDueDate || null,
+        assigned_to: editAssignedTo !== "" ? (editAssignedTo as number) : null,
+      });
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
+      setEditingTaskId(null);
+    } catch {
+      alert("Failed to save changes.");
+    }
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -166,28 +180,37 @@ function TasksPage({ user }: { user: User | null }) {
       alert("Please select a project first");
       return;
     }
-    await createTask({
-      title,
-      description: description || undefined,
-      project_id: projectId as number,
-      assigned_to: selectedUserId !== "" ? selectedUserId : null,
-      priority,
-      due_date: dueDate || undefined,
-    });
-    const params = selectedProjectId !== "" ? { project_id: selectedProjectId as number } : undefined;
-    const data = await getTasks(params);
-    setTasks(data);
-    setTitle("");
-    setDescription("");
-    setProjectId("");
-    setSelectedUserId("");
-    setPriority("Medium");
-    setDueDate("");
+    setSubmitting(true);
+    try {
+      await createTask({
+        title,
+        description: description || undefined,
+        project_id: projectId as number,
+        assigned_to: selectedUserId !== "" ? selectedUserId : null,
+        priority,
+        due_date: dueDate || undefined,
+      });
+      const params = selectedProjectId !== "" ? { project_id: selectedProjectId as number } : undefined;
+      const data = await getTasks(params);
+      setTasks(data);
+      setTitle("");
+      setDescription("");
+      setProjectId("");
+      setSelectedUserId("");
+      setPriority("Medium");
+      setDueDate("");
+    } catch {
+      alert("Failed to create task.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const todo = tasks.filter((t) => t.status === "To Do");
   const inProgress = tasks.filter((t) => t.status === "In Progress");
   const done = tasks.filter((t) => t.status === "Done");
+  const today = new Date().toISOString().split("T")[0];
+  const isOverdue = (task: any) => task.due_date && task.due_date.split("T")[0] < today;
 
   if (loading) return (
     <div className="flex items-center justify-center py-24 text-sm text-gray-400">Loading...</div>
@@ -238,10 +261,26 @@ function TasksPage({ user }: { user: User | null }) {
                 {task.archived_at && (
                   <p className="text-xs text-gray-400 mt-0.5">Archived: {new Date(task.archived_at).toLocaleString("en-GB", { timeZone: "Europe/Belgrade", hour12: false })}</p>
                 )}
-                <div className="flex items-center gap-1.5 mt-1.5">
-                  <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
-                  {task.due_date && (
-                    <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                <div className="flex items-center justify-between mt-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
+                    {task.due_date && (
+                      <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                    )}
+                  </div>
+                  {user?.role === "admin" && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm("Delete permanently?")) {
+                          deleteTaskPermanent(task.id).then(() =>
+                            setArchivedTasks((prev) => prev.filter((t) => t.id !== task.id))
+                          );
+                        }
+                      }}
+                      className="text-xs font-medium px-2 py-0.5 rounded bg-red-50 text-red-500 hover:bg-red-100 transition-colors duration-150"
+                    >
+                      Delete
+                    </button>
                   )}
                 </div>
               </div>
@@ -282,7 +321,9 @@ function TasksPage({ user }: { user: User | null }) {
             <div
               key={task.id}
               className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-150 border ${
-                task.assigned_to === user?.id
+                isOverdue(task)
+                  ? "bg-red-50 border-red-300"
+                  : task.assigned_to === user?.id
                   ? "bg-blue-50 border-blue-300"
                   : "bg-white border-gray-200"
               }`}
@@ -359,7 +400,10 @@ function TasksPage({ user }: { user: User | null }) {
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
                         {task.due_date && (
-                          <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                          <span className={`text-xs ${isOverdue(task) ? "font-semibold text-red-600" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                        )}
+                        {isOverdue(task) && (
+                          <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600 uppercase tracking-wide">Overdue</span>
                         )}
                       </div>
                     </div>
@@ -456,7 +500,9 @@ function TasksPage({ user }: { user: User | null }) {
             <div
               key={task.id}
               className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-150 border ${
-                task.assigned_to === user?.id
+                isOverdue(task)
+                  ? "bg-red-50 border-red-300"
+                  : task.assigned_to === user?.id
                   ? "bg-blue-50 border-blue-300"
                   : "bg-white border-gray-200"
               }`}
@@ -536,7 +582,10 @@ function TasksPage({ user }: { user: User | null }) {
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${task.priority === "High" ? "bg-red-100 text-red-600" : task.priority === "Low" ? "bg-gray-100 text-gray-500" : "bg-yellow-100 text-yellow-600"}`}>{task.priority}</span>
                         {task.due_date && (
-                          <span className={`text-xs ${task.due_date.split("T")[0] < new Date().toISOString().split("T")[0] ? "text-red-500" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                          <span className={`text-xs ${isOverdue(task) ? "font-semibold text-red-600" : "text-gray-400"}`}>Due: {new Date(task.due_date).toLocaleDateString("en-GB")}</span>
+                        )}
+                        {isOverdue(task) && (
+                          <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600 uppercase tracking-wide">Overdue</span>
                         )}
                       </div>
                     </div>
@@ -937,9 +986,10 @@ function TasksPage({ user }: { user: User | null }) {
               </div>
               <button
                 type="submit"
-                className="w-full mt-1 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors duration-150"
+                disabled={submitting}
+                className="w-full mt-1 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Create Task
+                {submitting ? "Creating..." : "Create Task"}
               </button>
             </form>
           </div>

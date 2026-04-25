@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProjectDetails } from "../api/api";
+import { getProjectDetails, deleteProject, exportProject } from "../api/api";
 
 interface ProjectDetail {
   id: number;
@@ -158,6 +158,32 @@ function ProjectDetailsPage() {
             "bg-gray-100 text-gray-500"
           }`}>{project.status}</span>
         </div>
+        <button
+          onClick={() => {
+            exportProject(Number(id)).then((exportData) => {
+              const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `project-${id}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+            });
+          }}
+          className="ml-auto text-sm font-medium px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-150"
+        >
+          Export JSON
+        </button>
+        <button
+          onClick={() => {
+            if (window.confirm("Delete project and all tasks permanently?")) {
+              deleteProject(Number(id)).then(() => navigate("/projects"));
+            }
+          }}
+          className="text-sm font-medium px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors duration-150"
+        >
+          Delete Project
+        </button>
       </div>
 
       {/* Project info */}
