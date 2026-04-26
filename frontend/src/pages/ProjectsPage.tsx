@@ -28,8 +28,8 @@ function ProjectsPage() {
 
   useEffect(() => {
     getProjects()
-      .then((data) => setProjects(data))
-      .catch(() => {})
+      .then((data) => { if (Array.isArray(data)) setProjects(data); else setProjects([]); })
+      .catch(() => setProjects([]))
       .finally(() => setLoading(false));
   }, []);
 

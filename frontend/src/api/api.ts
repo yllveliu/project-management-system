@@ -57,6 +57,7 @@ export async function createProject(data: {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
     body: JSON.stringify(data),
   });
+  if (!response.ok) throw new Error(await response.text());
   return response.json();
 }
 
@@ -86,6 +87,7 @@ export async function createTask(data: {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
     body: JSON.stringify(data),
   });
+  if (!response.ok) throw new Error(await response.text());
   return response.json();
 }
 
@@ -101,6 +103,7 @@ export async function updateTask(id: number, data: {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
     body: JSON.stringify(data),
   });
+  if (!response.ok) throw new Error(await response.text());
   return response.json();
 }
 
@@ -110,6 +113,7 @@ export async function updateTaskStatus(id: number, data: object) {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
     body: JSON.stringify(data),
   });
+  if (!response.ok) throw new Error(await response.text());
   return response.json();
 }
 
@@ -121,17 +125,19 @@ export async function deleteTask(id: number): Promise<void> {
 }
 
 export async function deleteTaskPermanent(id: number): Promise<void> {
-  await fetch(`${BASE_URL}/tasks/${id}/permanent`, {
+  const response = await fetch(`${BASE_URL}/tasks/${id}/permanent`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${getToken()}` },
   });
+  if (!response.ok) throw new Error(await response.text());
 }
 
 export async function deleteProject(id: number): Promise<void> {
-  await fetch(`${BASE_URL}/projects/${id}`, {
+  const response = await fetch(`${BASE_URL}/projects/${id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${getToken()}` },
   });
+  if (!response.ok) throw new Error(await response.text());
 }
 
 export async function archiveTask(id: number) {
@@ -176,6 +182,7 @@ export async function createComment(data: { content: string; task_id: number }) 
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
     body: JSON.stringify(data),
   });
+  if (!response.ok) throw new Error(await response.text());
   return response.json();
 }
 

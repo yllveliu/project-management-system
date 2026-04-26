@@ -49,18 +49,32 @@ function TasksPage({ user }: { user: User | null }) {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    const params = selectedProjectId !== "" ? { project_id: selectedProjectId as number } : undefined;
-    getTasks(params)
-      .then((data) => {
-        setTasks(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to load tasks.");
-        setLoading(false);
-      });
-  }, [selectedProjectId]);
+  setEditingTaskId(null);
+  setPendingDoneTaskId(null);
+  setCompletionNote("");
+  setShowCommentsTaskId(null);
+  setShowActivityTaskId(null);
+  setCommentsMap({});
+  setCommentInputMap({});
+  setActivityMap({});
+  setUpdatingId(null);
+  setError(null);
+  setLoading(true);
+
+  const params =
+    selectedProjectId !== "" ? { project_id: selectedProjectId as number } : undefined;
+
+  getTasks(params)
+    .then((data) => {
+      setTasks(data);
+      setLoading(false);
+    })
+    .catch(() => {
+      setError("Failed to load tasks.");
+      setTasks([]);
+      setLoading(false);
+    });
+}, [selectedProjectId]);
 
   const handleStatusChange = (taskId: number, newStatus: string) => {
   if (newStatus === "Done") {
@@ -210,7 +224,7 @@ function TasksPage({ user }: { user: User | null }) {
   const inProgress = tasks.filter((t) => t.status === "In Progress");
   const done = tasks.filter((t) => t.status === "Done");
   const today = new Date().toISOString().split("T")[0];
-  const isOverdue = (task: any) => task.due_date && task.due_date.split("T")[0] < today;
+  const isOverdue = (task: any) => task.due_date && task.status !== "Done" && task.due_date.split("T")[0] < today;
 
   if (loading) return (
     <div className="flex items-center justify-center py-24 text-sm text-gray-400">Loading...</div>
