@@ -59,12 +59,12 @@ function DashboardPage({ user }: { user: User | null }) {
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
         <select
           value={selectedProjectId}
           onChange={(e) => setSelectedProjectId(e.target.value !== "" ? Number(e.target.value) : "")}
-          className="ml-auto px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+          className="ml-auto w-full sm:w-auto px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
         >
           <option value="">All Projects</option>
           {projects.map((p) => (
@@ -91,7 +91,7 @@ function DashboardPage({ user }: { user: User | null }) {
       </div>
 
       {/* Completion rate */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-8 max-w-md">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-8 w-full max-w-md">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium text-gray-700">Completion Rate</p>
           <p className="text-sm font-semibold text-gray-900">{stats.completion_rate}%</p>
@@ -106,7 +106,7 @@ function DashboardPage({ user }: { user: User | null }) {
 
       {/* Overdue tasks list */}
       {stats.overdue_tasks.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 max-w-lg">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 w-full max-w-lg">
           <h2 className="text-sm font-semibold text-gray-700 mb-3">Overdue Tasks</h2>
           <div className="flex flex-col gap-2">
             {stats.overdue_tasks.map((task) => (

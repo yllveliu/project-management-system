@@ -122,7 +122,7 @@ function ProjectsPage() {
       </section>
 
       {/* Create project form */}
-      <section className="max-w-md">
+      <section className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-base font-semibold text-gray-900 mb-4">New Project</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -156,7 +156,7 @@ function ProjectsPage() {
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">Start Date</label>
                 <input
@@ -176,7 +176,7 @@ function ProjectsPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">Priority</label>
                 <select

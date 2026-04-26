@@ -138,14 +138,14 @@ function ProjectDetailsPage() {
   return (
     <div>
       {/* Back button + title */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         <button
           onClick={() => navigate("/projects")}
           className="text-sm font-medium px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-150"
         >
           ← Back
         </button>
-        <h1 className="text-2xl font-semibold text-gray-900">{project.title}</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 min-w-0 break-words">{project.title}</h1>
         <div className="flex items-center gap-1.5 ml-1">
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
             project.priority === "High" ? "bg-red-50 text-red-600" :
@@ -158,32 +158,34 @@ function ProjectDetailsPage() {
             "bg-gray-100 text-gray-500"
           }`}>{project.status}</span>
         </div>
-        <button
-          onClick={() => {
-            exportProject(Number(id)).then((exportData) => {
-              const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `project-${id}.json`;
-              a.click();
-              URL.revokeObjectURL(url);
-            });
-          }}
-          className="ml-auto text-sm font-medium px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-150"
-        >
-          Export JSON
-        </button>
-        <button
-          onClick={() => {
-            if (window.confirm("Delete project and all tasks permanently?")) {
-              deleteProject(Number(id)).then(() => navigate("/projects"));
-            }
-          }}
-          className="text-sm font-medium px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors duration-150"
-        >
-          Delete Project
-        </button>
+        <div className="flex items-center gap-2 ml-auto flex-wrap justify-end">
+          <button
+            onClick={() => {
+              exportProject(Number(id)).then((exportData) => {
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `project-${id}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+              });
+            }}
+            className="text-sm font-medium px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-150"
+          >
+            Export JSON
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm("Delete project and all tasks permanently?")) {
+                deleteProject(Number(id)).then(() => navigate("/projects"));
+              }
+            }}
+            className="text-sm font-medium px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors duration-150"
+          >
+            Delete Project
+          </button>
+        </div>
       </div>
 
       {/* Project info */}
@@ -210,7 +212,7 @@ function ProjectDetailsPage() {
       </div>
 
       {/* Completion rate */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-8 max-w-md">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-8 w-full max-w-md">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium text-gray-700">Completion Rate</p>
           <p className="text-sm font-semibold text-gray-900">{stats.completion_rate}%</p>
@@ -233,7 +235,7 @@ function ProjectDetailsPage() {
         {tasks.active.length === 0 ? (
           <p className="text-xs text-gray-400">No active tasks.</p>
         ) : (
-          <div className="flex flex-col gap-2 max-w-2xl">
+          <div className="flex flex-col gap-2 w-full max-w-2xl">
             {tasks.active.map((task) => <TaskRow key={task.id} task={task} />)}
           </div>
         )}
@@ -247,7 +249,7 @@ function ProjectDetailsPage() {
             <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Completed Tasks</h2>
             <span className="text-xs text-gray-400 font-medium">{tasks.completed.length}</span>
           </div>
-          <div className="flex flex-col gap-2 max-w-2xl">
+          <div className="flex flex-col gap-2 w-full max-w-2xl">
             {tasks.completed.map((task) => <TaskRow key={task.id} task={task} />)}
           </div>
         </section>
@@ -261,7 +263,7 @@ function ProjectDetailsPage() {
             <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Archived Tasks</h2>
             <span className="text-xs text-gray-400 font-medium">{tasks.archived.length}</span>
           </div>
-          <div className="flex flex-col gap-2 max-w-2xl">
+          <div className="flex flex-col gap-2 w-full max-w-2xl">
             {tasks.archived.map((task) => <TaskRow key={task.id} task={task} />)}
           </div>
         </section>

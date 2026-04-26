@@ -222,7 +222,7 @@ function TasksPage({ user }: { user: User | null }) {
   if (showArchivedView && user?.role === "admin") {
     return (
       <div>
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-3 mb-6">
           <button
             onClick={() => setShowArchivedView(false)}
             className="text-sm font-medium px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-150"
@@ -293,13 +293,13 @@ function TasksPage({ user }: { user: User | null }) {
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Tasks</h1>
         {user?.role === "admin" && (
           <select
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value !== "" ? Number(e.target.value) : "")}
-            className="ml-auto px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            className="ml-auto w-full sm:w-auto px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
           >
             <option value="">All Projects</option>
             {projects.map((p) => (
@@ -387,9 +387,9 @@ function TasksPage({ user }: { user: User | null }) {
                 </div>
               ) : (
                 <>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="text-sm text-gray-800 font-medium">{task.title}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="w-full min-w-0">
+                      <span className="text-sm text-gray-800 font-medium break-words">{task.title}</span>
                       <p className="text-xs text-gray-500 mt-0.5">Project: {projects.find((p) => p.id === task.project_id)?.title ?? `#${task.project_id}`}</p>
                       {task.description && (
                         <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
@@ -407,7 +407,7 @@ function TasksPage({ user }: { user: User | null }) {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="w-full sm:w-auto flex flex-wrap gap-2 mt-2 sm:mt-0 justify-end">
                       <button
                         onClick={() => handleToggleComments(task.id)}
                         className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
@@ -566,9 +566,9 @@ function TasksPage({ user }: { user: User | null }) {
                 </div>
               ) : (
                 <>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="text-sm text-gray-800 font-medium">{task.title}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="w-full min-w-0">
+                      <span className="text-sm text-gray-800 font-medium break-words">{task.title}</span>
                       <p className="text-xs text-gray-500 mt-0.5">Project: {projects.find((p) => p.id === task.project_id)?.title ?? `#${task.project_id}`}</p>
                       {task.description && (
                         <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
@@ -590,7 +590,7 @@ function TasksPage({ user }: { user: User | null }) {
                       </div>
                     </div>
                     {pendingDoneTaskId === task.id ? (
-                      <div className="flex flex-col gap-1.5 shrink-0 w-44">
+                      <div className="flex flex-col gap-1.5 w-full sm:w-44">
                         <textarea
                           placeholder="Describe what was done, changes made, or issues resolved..."
                           value={completionNote}
@@ -615,7 +615,7 @@ function TasksPage({ user }: { user: User | null }) {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="w-full sm:w-auto flex flex-wrap gap-2 mt-2 sm:mt-0 justify-end">
                         <button
                           onClick={() => handleToggleComments(task.id)}
                           className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
@@ -784,9 +784,9 @@ function TasksPage({ user }: { user: User | null }) {
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-sm text-gray-500 font-medium line-through">{task.title}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="w-full min-w-0">
+                        <span className="text-sm text-gray-500 font-medium line-through break-words">{task.title}</span>
                         <p className="text-xs text-gray-500 mt-0.5">Project: {projects.find((p) => p.id === task.project_id)?.title ?? `#${task.project_id}`}</p>
                         {task.description && (
                           <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
@@ -810,7 +810,7 @@ function TasksPage({ user }: { user: User | null }) {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="w-full sm:w-auto flex flex-wrap gap-2 mt-2 sm:mt-0 justify-end">
                         <button
                           onClick={() => handleToggleComments(task.id)}
                           className="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-150"
@@ -911,7 +911,7 @@ function TasksPage({ user }: { user: User | null }) {
       )}
 
       {user?.role === "admin" && (
-        <section className="mt-8 max-w-md">
+        <section className="mt-8 w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-4">New Task</h2>
             <form onSubmit={handleCreateTask} className="flex flex-col gap-4">
@@ -935,7 +935,7 @@ function TasksPage({ user }: { user: User | null }) {
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex flex-col gap-1 flex-1">
                   <label className="text-sm font-medium text-gray-700">Priority</label>
                   <select

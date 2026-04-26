@@ -17,11 +17,11 @@ function Navbar({ user, setUser }: { user: User | null; setUser: (user: User | n
 
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 min-h-[4rem] flex flex-col sm:flex-row items-start sm:items-center gap-x-6 gap-y-2">
         <span className="text-base font-semibold text-gray-900 tracking-tight select-none">
           ProjectFlow
         </span>
-        <div className="flex items-center gap-6">
+        <div className="w-full sm:w-auto flex flex-wrap items-center gap-x-4 gap-y-2 sm:ml-auto mt-1 sm:mt-0">
           {user ? (
             <>
               {user.role === "admin" && (
