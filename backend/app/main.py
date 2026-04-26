@@ -39,3 +39,9 @@ def root():
 @app.get("/test-db")
 def test_db(db: Session = Depends(get_db)):
     return {"message": "Database session created successfully"}
+
+@app.post("/reset-db")
+def reset_db():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    return {"message": "Database reset successfully"}
