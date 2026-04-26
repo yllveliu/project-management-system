@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = "https://project-management-system-lxx8.onrender.com";
 
 function getToken(): string {
   return localStorage.getItem("token") ?? "";
