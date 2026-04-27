@@ -26,8 +26,13 @@ function ProtectedRoute({
   loading: boolean;
   children: React.ReactNode;
 }) {
-  if (loading) return null;
-  return user ? children : <Navigate to="/login" replace />;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  return user ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
 function App() {
@@ -80,8 +85,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/login" element={<LoginPage setUser={setUser} />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/login"
+              element={loading ? null : user ? <Navigate to={user.role === "admin" ? "/projects" : "/tasks"} replace /> : <LoginPage setUser={setUser} />}
+            />
+            <Route
+              path="/register"
+              element={loading ? null : user ? <Navigate to={user.role === "admin" ? "/projects" : "/tasks"} replace /> : <RegisterPage />}
+            />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>

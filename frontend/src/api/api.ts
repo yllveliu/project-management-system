@@ -32,7 +32,10 @@ export async function getMe() {
   const response = await fetch(`${BASE_URL}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!response.ok) return null;
+  if (!response.ok) {
+    localStorage.removeItem("token");
+    return null;
+  }
   return response.json();
 }
 
